@@ -31,6 +31,7 @@ pub mod test;
 pub mod text_annotations;
 pub mod textobject;
 mod transaction;
+pub mod tree_sitter_pairs;
 pub mod uri;
 pub mod wrap;
 

@@ -4262,10 +4262,13 @@ pub mod insert {
                 // If we are between pairs (such as brackets), we want to
                 // insert an additional line which is indented one level
                 // more and place the cursor there
+                // let tree_sitter_pairs: Option<&AutoPairs> = some_func(syntax);
                 let on_auto_pair = doc
+                    // TODO: Extend AutoPairs inner HashMap with the tree sitter AutoPairs
                     .auto_pairs(cx.editor)
                     .and_then(|pairs| pairs.get(prev))
                     .is_some_and(|pair| pair.open == prev && pair.close == curr);
+                // let on_tree_sitter_pair: bool = doc.tree_sitter_pairs(syntax);
 
                 let local_offs = if let Some(token) = continue_comment_token {
                     new_text.reserve_exact(line_ending.len() + indent.len() + token.len() + 1);

@@ -361,6 +361,8 @@ pub struct IndentQuery {
     outdent_always_capture: Option<Capture>,
     align_capture: Option<Capture>,
     anchor_capture: Option<Capture>,
+    pair_open_capture: Option<Capture>,
+    pair_close_capture: Option<Capture>,
     extend_capture: Option<Capture>,
     extend_prevent_once_capture: Option<Capture>,
 }
@@ -435,6 +437,8 @@ impl IndentQuery {
             align_capture: query.get_capture("align"),
             anchor_capture: query.get_capture("anchor"),
             extend_capture: query.get_capture("extend"),
+            pair_open_capture: query.get_capture("pair.open"),
+            pair_close_capture: query.get_capture("pair.close"),
             extend_prevent_once_capture: query.get_capture("extend.prevent-once"),
             query,
         })
@@ -509,6 +513,7 @@ impl<'a> Indentation<'a> {
                     self.align = Some(align);
                 }
             }
+            IndentCaptureType::Pair => {}
         }
     }
     fn net_indent(&self) -> isize {
@@ -562,6 +567,7 @@ enum IndentCaptureType<'a> {
     IndentAlways,
     Outdent,
     OutdentAlways,
+    Pair,
     /// Alignment given as a string of whitespace
     Align(RopeSlice<'a>),
 }
@@ -569,7 +575,9 @@ enum IndentCaptureType<'a> {
 impl IndentCaptureType<'_> {
     fn default_scope(&self) -> IndentScope {
         match self {
-            IndentCaptureType::Indent | IndentCaptureType::IndentAlways => IndentScope::Tail,
+            IndentCaptureType::Indent
+            | IndentCaptureType::IndentAlways
+            | IndentCaptureType::Pair => IndentScope::Tail,
             IndentCaptureType::Outdent | IndentCaptureType::OutdentAlways => IndentScope::All,
             IndentCaptureType::Align(_) => IndentScope::All,
         }
@@ -651,6 +659,7 @@ fn query_indents<'a>(
         let mut added_indent_captures: Vec<(usize, IndentCapture)> = Vec::new();
         // The row/column position of the optional anchor in this query
         let mut anchor: Option<&Node> = None;
+        let mut pair: (Option<&Node>, Option<&Node>) = (None, None);
         for matched_node in m.matched_nodes() {
             let node_id = matched_node.node.id();
             let capture = Some(matched_node.capture);
@@ -671,6 +680,8 @@ fn query_indents<'a>(
                     anchor = Some(&matched_node.node);
                 }
                 continue;
+            } else if capture == query.pair_close_capture {
+                IndentCaptureType::Pair
             } else if capture == query.extend_capture {
                 extend_captures
                     .entry(node_id)
