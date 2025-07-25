@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
 pub mod config;
 
 use std::{

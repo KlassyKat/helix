@@ -4131,7 +4131,7 @@ pub mod insert {
         Some(transaction)
     }
 
-    use helix_core::auto_pairs;
+    use helix_core::{auto_pairs, tree_sitter_pairs::query_treesitter_pairs};
     use helix_view::editor::SmartTabConfig;
 
     pub fn insert_char(cx: &mut Context, c: char) {
@@ -4262,6 +4262,7 @@ pub mod insert {
                 // If we are between pairs (such as brackets), we want to
                 // insert an additional line which is indented one level
                 // more and place the cursor there
+                // TODO:
                 // let tree_sitter_pairs: Option<&AutoPairs> = some_func(syntax);
                 let on_auto_pair = doc
                     // TODO: Extend AutoPairs inner HashMap with the tree sitter AutoPairs
@@ -4269,6 +4270,7 @@ pub mod insert {
                     .and_then(|pairs| pairs.get(prev))
                     .is_some_and(|pair| pair.open == prev && pair.close == curr);
                 // let on_tree_sitter_pair: bool = doc.tree_sitter_pairs(syntax);
+                let on_ts_pair = query_treesitter_pairs(query, syntax, range, text)
 
                 let local_offs = if let Some(token) = continue_comment_token {
                     new_text.reserve_exact(line_ending.len() + indent.len() + token.len() + 1);

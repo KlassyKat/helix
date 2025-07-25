@@ -61,7 +61,7 @@ impl IndentStyle {
     }
 
     #[inline]
-    pub fn indent_width(&self, tab_width: usize) -> usize {
+    pub const fn indent_width(&self, tab_width: usize) -> usize {
         match *self {
             IndentStyle::Tabs => tab_width,
             IndentStyle::Spaces(width) => width as usize,
@@ -573,13 +573,14 @@ enum IndentCaptureType<'a> {
 }
 
 impl IndentCaptureType<'_> {
-    fn default_scope(&self) -> IndentScope {
+    const fn default_scope(&self) -> IndentScope {
         match self {
             IndentCaptureType::Indent
             | IndentCaptureType::IndentAlways
             | IndentCaptureType::Pair => IndentScope::Tail,
-            IndentCaptureType::Outdent | IndentCaptureType::OutdentAlways => IndentScope::All,
-            IndentCaptureType::Align(_) => IndentScope::All,
+            IndentCaptureType::Outdent
+            | IndentCaptureType::OutdentAlways
+            | IndentCaptureType::Align(_) => IndentScope::All,
         }
     }
 }
@@ -1047,11 +1048,8 @@ pub fn indent_for_newline(
                 let mut num_attempts = 0;
                 for line_idx in (0..=line_before).rev() {
                     let line = text.line(line_idx);
-                    let first_non_whitespace_char = match line.first_non_whitespace_char() {
-                        Some(i) => i,
-                        None => {
-                            continue;
-                        }
+                    let Some(first_non_whitespace_char) = line.first_non_whitespace_char() else {
+                        continue;
                     };
                     if let Some(indent) = (|| {
                         let computed_indent = treesitter_indent_for_pos(
@@ -1092,13 +1090,12 @@ pub fn get_scopes<'a>(syntax: Option<&'a Syntax>, text: RopeSlice, pos: usize) -
     let mut scopes = Vec::new();
     if let Some(syntax) = syntax {
         let pos = text.char_to_byte(pos) as u32;
-        let mut node = match syntax
+        let Some(mut node) = syntax
             .tree()
             .root_node()
             .descendant_for_byte_range(pos, pos)
-        {
-            Some(node) => node,
-            None => return scopes,
+        else {
+            return scopes;
         };
 
         scopes.push(node.kind());
